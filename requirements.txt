@@ -1,0 +1,6 @@
+streamlit==1.39.0
+sqlalchemy==2.0.36
+pymysql==1.1.1
+pandas==2.2.3
+faker==30.8.2
+cryptography==43.0.3

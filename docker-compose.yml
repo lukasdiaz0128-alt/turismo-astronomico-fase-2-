@@ -1,0 +1,52 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_turismo_astronomico
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: turismo_astronomico
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./01_schema_y_objetos.sql:/docker-entrypoint-initdb.d/01_schema_y_objetos.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  seeder:
+    build: .
+    container_name: seeder_turismo_astronomico
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: turismo_astronomico
+    command: ["python", "02_poblar_datos.py"]
+
+  web:
+    build: .
+    container_name: pmv_streamlit_astronomia
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: turismo_astronomico
+    command: ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+volumes:
+  mysql_data:
